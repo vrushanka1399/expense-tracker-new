@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💰 Expense Tracker (Capstone Project)
 
-## Getting Started
+## 📌 Overview
 
-First, run the development server:
+This is a full-stack expense tracker application built using **Next.js**.
+It allows users to manage and track their daily expenses efficiently.
+
+---
+
+## 🚀 Features
+
+* ➕ Add expenses with title and amount
+* 📋 View all expenses
+* 🗑️ Delete expenses
+* ☁️ Real-time data storage using Firebase
+* ⚡ Responsive and clean UI
+
+---
+
+## 🛠️ Tech Stack
+
+* Next.js
+* React
+* Firebase
+* Tailwind CSS
+
+---
+
+## 🎥 Demo Video
+
+https://drive.google.com/file/d/1unCArfjo3LGdbJZaHz2TBVSpZnkRijXy/view?usp=sharing
+
+---
+
+## 🌐 Live Demo
+https://expense-tracker-nine-sigma-51.vercel.app/signup
+
+## 🔐 How to Use
+1. Create a new account using Sign Up  
+2. Login with your credentials  
+3. Access dashboard to add and manage expenses  
+
+## 📂 Project Setup
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🎯 Learning Outcomes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+* Built a full-stack application using Next.js
+* Integrated Firebase for real-time data
+* Improved frontend design using Tailwind CSS
+* Learned deployment and project structuring
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🔮 Future Improvements
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+* Add authentication (login/signup)
+* Add expense categories
+* Add charts & analytics dashboard
+* Export reports (PDF/CSV)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 📌 Conclusion
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project demonstrates my ability to build a real-world application with modern technologies and user-friendly design.
