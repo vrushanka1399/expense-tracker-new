@@ -1,0 +1,126 @@
+/* CONTAINER */
+.container {
+  max-width: 950px;
+  margin: auto;
+  padding: 40px 20px;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #222;
+}
+
+/* LOGOUT BUTTON */
+.logout {
+  background: linear-gradient(135deg, #ff4d4d, #ff1a1a);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+.logout:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+}
+
+/* FORM */
+.form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* INPUT */
+.input {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.2);
+}
+
+/* ADD BUTTON */
+.button {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+/* FILTER */
+.filter {
+  margin-top: 15px;
+  font-size: 15px;
+}
+
+/* TOTAL */
+.total {
+  margin-top: 20px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* CHART */
+.chart {
+  display: flex;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+/* EXPENSE LIST */
+.expenses {
+  margin-top: 20px;
+}
+
+/* CARD */
+.card {
+  background: white;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: 0.25s;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+/* TEXT */
+.card p {
+  margin: 4px 0;
+  color: #444;
+}
+body {
+  background: linear-gradient(135deg, #eef2f7, #e6ecf5);
+}
