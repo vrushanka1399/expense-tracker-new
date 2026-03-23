@@ -3,55 +3,67 @@
 import { useState } from "react";
 import { db, auth } from "@/firebase/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import "./signup.css"; 
+import "./signup.css";
 
 export default function Signup() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const router = useRouter();
+const [email, setEmail] = useState("");
+const [password, setPassword] = useState("");
+const router = useRouter();
 
-  const handleSignup = async () => {
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      alert("Signup successful");
-      router.push("/login");
-    } catch (error: any) {
-      alert(error.message);
-    }
-  };
+const handleSignup = async () => {
+try {
+const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+const user = userCredential.user;
 
-  return (
-  <div className="signup-container">
-    <div className="signup-card">
-      
-      <h1 className="signup-title">Sign Up</h1>
 
-      <input
-        className="signup-input"
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+  await setDoc(doc(db, "users", user.uid), {
+    email: email,
+    role: "user",
+  });
 
-      <input
-        className="signup-input"
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+  alert("Signup successful");
+  router.push("/login");
+} catch (error: any) {
+  alert(error.message);
+}
 
-      <button className="signup-button" onClick={handleSignup}>
-        Create Account
-      </button>
 
-      <p style={{ textAlign: "center", marginTop: "10px" }}>
-        Already have an account? <a href="/login">Login</a>
-      </p>
+};
 
-    </div>
+return ( <div className="signup-container"> <div className="signup-card">
+
+
+    <h1 className="signup-title">Sign Up</h1>
+
+    <input
+      className="signup-input"
+      type="email"
+      placeholder="Email"
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+    />
+
+    <input
+      className="signup-input"
+      type="password"
+      placeholder="Password"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+    />
+
+    <button className="signup-button" onClick={handleSignup}>
+      Create Account
+    </button>
+
+    <p style={{ textAlign: "center", marginTop: "10px" }}>
+      Already have an account? <a href="/login">Login</a>
+    </p>
+
   </div>
+</div>
+
+
 );
 }

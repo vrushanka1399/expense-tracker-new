@@ -1,126 +1,194 @@
-/* CONTAINER */
-.container {
-  max-width: 950px;
-  margin: auto;
-  padding: 40px 20px;
-  font-family: "Segoe UI", sans-serif;
+/* ===== GLOBAL ===== */
+body {
+  margin: 0;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  background: #f1f5f9;
 }
 
-/* HEADER */
+/* ===== LAYOUT ===== */
+.layout {
+  display: flex;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background: linear-gradient(180deg, #0f172a, #020617);
+  color: white;
+  padding: 20px;
+  position: fixed;
+}
+
+.sidebar h2 {
+  margin-bottom: 30px;
+  font-weight: 700;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li {
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.25s;
+  font-weight: 500;
+}
+
+.sidebar li:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar li.active {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  font-weight: 600;
+}
+
+/* ===== MAIN ===== */
+.main {
+  margin-left: 260px;
+  padding: 30px;
+  width: 100%;
+}
+
+/* ===== HEADER ===== */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
 }
 
-.title {
-  font-size: 32px;
+/* ===== TEXT ===== */
+h1 {
+  font-size: 30px;
   font-weight: 700;
-  color: #222;
 }
 
-/* LOGOUT BUTTON */
-.logout {
-  background: linear-gradient(135deg, #ff4d4d, #ff1a1a);
-  color: white;
+h2 {
+  margin-top: 30px;
+  font-size: 22px;
+}
+
+h3 {
+  color: #64748b;
+}
+
+/* ===== BUTTON BASE ===== */
+button {
   border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
   cursor: pointer;
-  font-weight: 500;
-  transition: 0.3s;
+  font-weight: 600;
+  transition: all 0.25s ease;
 }
 
-.logout:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
-}
-
-/* FORM */
-.form {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-/* INPUT */
-.input {
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  outline: none;
-  transition: 0.2s;
-}
-
-.input:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 6px rgba(0, 123, 255, 0.2);
-}
-
-/* ADD BUTTON */
-.button {
-  background: linear-gradient(135deg, #007bff, #0056b3);
+/* PRIMARY */
+.card .btn-primary {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
   color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: 0.3s;
+  padding: 8px 16px;
+  display: inline-block;
+  width: auto !important;
 }
 
-.button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
 }
 
-/* FILTER */
-.filter {
+/* DELETE */
+.btn-delete {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+/* SUCCESS */
+.btn-success {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+}
+
+/* LOGOUT */
+.header button {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+/* ===== CARDS ===== */
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
   margin-top: 15px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  transition: 0.3s;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* BUTTON SPACING */
+.card button {
+  margin-right: 10px;
+  margin-top: 10px;
+  width: auto;
+}
+
+/* ACTION ROW */
+.card .actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* ===== FORM FIX (FINAL CLEAN VERSION) ===== */
+.form-card {
+  display: flex;
+  flex-direction: row;   /* 🔥 FORCE horizontal */
+  align-items: center;
+  gap: 10px;
+}
+
+.form-card input {
+  width: 200px;         /* 🔥 fixed width so they stay side-by-side */
+  padding: 8px;
+}
+
+.form-card button {
+  width: auto;
+  margin-top: 0 !important;
+}
+/* ===== TEXT STYLING ===== */
+.card p {
+  margin: 6px 0;
   font-size: 15px;
 }
 
-/* TOTAL */
-.total {
-  margin-top: 20px;
-  font-size: 22px;
-  font-weight: 600;
-  color: #333;
+strong {
+  color: #0f172a;
 }
 
-/* CHART */
-.chart {
-  display: flex;
-  justify-content: center;
-  margin: 30px 0;
+/* CATEGORY & EMAIL (FIXED COMPACT STYLE) */
+.category,
+.email {
+  display: inline-block;
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
 }
 
-/* EXPENSE LIST */
-.expenses {
-  margin-top: 20px;
+.category {
+  background: #e0f2fe;
+  color: #0369a1;
 }
 
-/* CARD */
-.card {
-  background: white;
-  border-radius: 10px;
-  padding: 15px;
-  margin-bottom: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: 0.25s;
-}
-
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-}
-
-/* TEXT */
-.card p {
-  margin: 4px 0;
-  color: #444;
-}
-body {
-  background: linear-gradient(135deg, #eef2f7, #e6ecf5);
+.email {
+  background: #eef2ff;
+  color: #3730a3;
 }

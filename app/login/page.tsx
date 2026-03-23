@@ -5,6 +5,7 @@ import { db, auth } from "@/firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import "./login.css";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -12,14 +13,27 @@ export default function Login() {
   const router = useRouter();
 
   const handleLogin = async () => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("Login successful");
-      router.push("/dashboard");
-    } catch (error: any) {
-      alert(error.message);
-    }
-  };
+  try {
+  const userCredential = await signInWithEmailAndPassword(auth, email, password);
+  const user = userCredential.user;
+
+
+// 🔥 ADD LOG ENTRY
+await addDoc(collection(db, "logs"), {
+  userId: user.uid,
+  userEmail: user.email, // ✅ ADD THIS
+  action: "LOGIN",
+  timestamp: serverTimestamp(),
+});
+
+alert("Login successful");
+router.push("/dashboard");
+
+} catch (error: any) {
+alert(error.message);
+}
+};
+
 
   return (
   <div className="login-container">

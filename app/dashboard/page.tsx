@@ -5,6 +5,14 @@ import { db, auth } from "@/firebase/firebase";
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import "./dashboard.css";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 import {
   collection,
@@ -16,289 +24,298 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  getDoc,
+  orderBy,
 } from "firebase/firestore";
-
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-} from "recharts";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 export default function Dashboard() {
   const router = useRouter();
 
+  const [activeTab, setActiveTab] = useState("dashboard");
+
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
-  const [expenses, setExpenses] = useState<any[]>([]);
-  const [filteredExpenses, setFilteredExpenses] = useState<any[]>([]);
-  const [user, setUser] = useState<any>(null);
-  const [filter, setFilter] = useState("All");
 
-  // 🔥 NEW STATES
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editId, setEditId] = useState("");
   const [editAmount, setEditAmount] = useState("");
   const [editCategory, setEditCategory] = useState("");
 
-  // 🔐 Auth
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+  const [expenses, setExpenses] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [logs, setLogs] = useState([]);
 
-      if (currentUser) {
-        fetchExpenses(currentUser.uid);
-      } else {
-        router.push("/login");
+  const [user, setUser] = useState(null);
+  const [role, setRole] = useState("");
+
+  // ✅ ADDED FILTER STATE
+  const [logFilter, setLogFilter] = useState("All");
+
+  // ✅ ADDED FILTER LOGIC
+  const filteredLogs =
+    logFilter === "All"
+      ? logs
+      : logs.filter((log) => log.userEmail === logFilter);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      setUser(u);
+      if (!u) return router.push("/login");
+
+      const docSnap = await getDoc(doc(db, "users", u.uid));
+      const userRole = docSnap.data()?.role;
+
+      setRole(userRole);
+      fetchExpenses(u.uid, userRole);
+
+      if (userRole === "admin") {
+        fetchUsers();
+        fetchLogs();
       }
     });
 
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
-  // 📊 Filter logic
-  useEffect(() => {
-    if (filter === "All") {
-      setFilteredExpenses(expenses);
-    } else {
-      setFilteredExpenses(
-        expenses.filter((exp) => exp.category === filter)
-      );
-    }
-  }, [filter, expenses]);
+  const fetchExpenses = async (uid, role) => {
+    const q =
+      role === "admin"
+        ? query(collection(db, "expenses"))
+        : query(collection(db, "expenses"), where("userId", "==", uid));
 
-  // ➕ Add Expense
+    const snap = await getDocs(q);
+    const list = [];
+    snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
+    setExpenses(list);
+  };
+
+  const fetchUsers = async () => {
+    const snap = await getDocs(collection(db, "users"));
+    const list = [];
+    snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
+    setUsers(list);
+  };
+
+  const fetchLogs = async () => {
+    const q = query(collection(db, "logs"), orderBy("timestamp", "desc"));
+    const snap = await getDocs(q);
+    const list = [];
+    snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
+    setLogs(list);
+  };
+
   const handleAddExpense = async () => {
-    if (!user) return;
+    if (!amount || !category) return;
 
     await addDoc(collection(db, "expenses"), {
       amount: Number(amount),
       category,
       userId: user.uid,
+      userEmail: user.email,
       createdAt: serverTimestamp(),
     });
 
     setAmount("");
     setCategory("");
-
-    fetchExpenses(user.uid);
+    fetchExpenses(user.uid, role);
   };
 
-  // 📥 Fetch
-  const fetchExpenses = async (uid: string) => {
-    const q = query(
-      collection(db, "expenses"),
-      where("userId", "==", uid)
-    );
+  const handleDelete = async (id) => {
+    await deleteDoc(doc(db, "expenses", id));
+    fetchExpenses(user.uid, role);
+  };
 
-    const querySnapshot = await getDocs(q);
-    const list: any[] = [];
+  const startEdit = (exp) => {
+    setEditId(exp.id);
+    setEditAmount(exp.amount);
+    setEditCategory(exp.category);
+  };
 
-    querySnapshot.forEach((doc) => {
-      list.push({ id: doc.id, ...doc.data() });
+  const handleUpdate = async () => {
+    await updateDoc(doc(db, "expenses", editId), {
+      amount: Number(editAmount),
+      category: editCategory,
     });
 
-    setExpenses(list);
+    setEditId("");
+    fetchExpenses(user.uid, role);
   };
 
-  // 🚪 Logout
   const handleLogout = async () => {
     await signOut(auth);
     router.push("/login");
   };
 
-  // 🗑 DELETE
-  const handleDelete = async (id: string) => {
-    await deleteDoc(doc(db, "expenses", id));
-    if (user) fetchExpenses(user.uid);
-  };
+  const chartData = Object.values(
+  expenses.reduce((acc, curr) => {
+    if (!acc[curr.category]) {
+      acc[curr.category] = { category: curr.category, total: 0 };
+    }
+    acc[curr.category].total += Number(curr.amount);
+    return acc;
+  }, {})
+);
+const handleExport = () => {
+  const formattedData = expenses.map((exp) => ({
+    Amount: exp.amount,
+    Category: exp.category,
+    User: exp.userEmail || exp.userId,
+  }));
 
-  // ✏️ START EDIT
-  const handleEdit = (exp: any) => {
-    setEditingId(exp.id);
-    setEditAmount(exp.amount);
-    setEditCategory(exp.category);
-  };
+  const ws = XLSX.utils.json_to_sheet(formattedData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Expenses");
 
-  // 💾 UPDATE
-  const handleUpdate = async (id: string) => {
-    await updateDoc(doc(db, "expenses", id), {
-      amount: Number(editAmount),
-      category: editCategory,
-    });
-
-    setEditingId(null);
-    if (user) fetchExpenses(user.uid);
-  };
+  const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  saveAs(new Blob([buffer]), "expenses.xlsx");
+};
 
   if (!user) return <p>Loading...</p>;
 
-  // 🔥 Chart Data
-  const chartData = Object.values(
-    filteredExpenses.reduce((acc: any, curr: any) => {
-      if (!acc[curr.category]) {
-        acc[curr.category] = { name: curr.category, value: 0 };
-      }
-      acc[curr.category].value += Number(curr.amount);
-      return acc;
-    }, {})
-  );
-
-  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
-
-  const total = filteredExpenses.reduce(
-    (sum, exp) => sum + Number(exp.amount),
-    0
-  );
-
   return (
-    <div className="container">
+    <div className="layout">
 
-      {/* HEADER */}
-      <div className="header">
-        <h1 className="title">Dashboard</h1>
-        <button className="logout" onClick={handleLogout}>
-          Logout
-        </button>
+      <div className="sidebar">
+        <h2>💸 ExpenseApp</h2>
+        <ul>
+          <li className={activeTab==="dashboard"?"active":""} onClick={()=>setActiveTab("dashboard")}>Dashboard</li>
+          <li className={activeTab==="expenses"?"active":""} onClick={()=>setActiveTab("expenses")}>Expenses</li>
+          <button className="btn-success" onClick={handleExport}>Export to Excel</button>
+          {role==="admin" && <li className={activeTab==="users"?"active":""} onClick={()=>setActiveTab("users")}>Users</li>}
+          {role==="admin" && <li className={activeTab==="logs"?"active":""} onClick={()=>setActiveTab("logs")}>Logs</li>}
+        </ul>
       </div>
 
-      {/* ADD */}
-      <div className="form">
-        <input
-          className="input"
-          type="number"
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
+      <div className="main">
 
-        <input
-          className="input"
-          type="text"
-          placeholder="Category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        />
+        <div className="header">
+          <h1>{activeTab.toUpperCase()}</h1>
+          <button className="btn-delete" onClick={handleLogout}>Logout</button>
+        </div>
 
-        <button className="button" onClick={handleAddExpense}>
-          Add
-        </button>
-      </div>
+        {activeTab==="dashboard" && (
+  <>
+    <div className="card">
+      <h2>Welcome {user.email}</h2>
+    </div>
 
-      {/* FILTER */}
-      <div className="filter">
-        <label>Filter by Category: </label>
-        <select
-          className="input"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        >
-          <option value="All">All</option>
+    <div className="card">
+      <h3>Expense Analytics</h3>
 
-          {[...new Set(expenses.map((e) => e.category))].map(
-            (cat, index) => (
-              <option key={index} value={cat}>
-                {cat}
-              </option>
-            )
-          )}
-        </select>
-      </div>
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart data={chartData}>
+          <XAxis dataKey="category" />
+          <YAxis />
+          <Tooltip />
+          <Bar dataKey="total" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  </>
+)}
 
-      {/* TOTAL */}
-      <div className="total">
-        Total: ₹ {total}
-      </div>
+        {activeTab==="expenses" && (
+          <div>
+            <h2>Expenses</h2>
 
-      {/* CHART */}
-      <div className="chart">
-        {chartData.length > 0 && (
-          <PieChart width={400} height={400}>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              outerRadius={120}
-              dataKey="value"
-              label
-            >
-              {chartData.map((_, index) => (
-                <Cell
-                  key={index}
-                  fill={COLORS[index % COLORS.length]}
-                />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
-        )}
-      </div>
+            <div className="card form-card">
+              <input type="number" placeholder="Amount" value={amount} onChange={(e)=>setAmount(e.target.value)} />
+              <input type="text" placeholder="Category" value={category} onChange={(e)=>setCategory(e.target.value)} />
+              <button className="btn-primary" onClick={handleAddExpense}>Add Expense</button>
+            </div>
 
-      {/* LIST */}
-      <div className="expenses">
-        <h2>Your Expenses</h2>
+            {expenses.map((exp)=>(
+              <div key={exp.id} className="card">
 
-        {filteredExpenses.map((exp) => (
-          <div key={exp.id} className="card">
+                {editId===exp.id ? (
+                  <>
+                    <input value={editAmount} onChange={(e)=>setEditAmount(e.target.value)} />
+                    <input value={editCategory} onChange={(e)=>setEditCategory(e.target.value)} />
+                    <button className="btn-primary" onClick={handleUpdate}>Save</button>
+                    <button className="btn-delete" onClick={()=>setEditId("")}>Cancel</button>
+                  </>
+                ) : (
+                  <>
+                    <p className="amount">₹ {exp.amount}</p>
+                    <p className="category">{exp.category}</p>
+                    {role === "admin" && (<p className="email">{exp.userEmail}</p>)}
 
-            {editingId === exp.id ? (
-              <>
-                <input
-                  className="input"
-                  value={editAmount}
-                  onChange={(e) => setEditAmount(e.target.value)}
-                />
+                    <div className="actions">
+                    {(role==="admin" || exp.userId===user.uid) && (
+                      <button className="btn-primary" onClick={()=>startEdit(exp)}>Edit</button>
+                    )}
 
-                <input
-                  className="input"
-                  value={editCategory}
-                  onChange={(e) => setEditCategory(e.target.value)}
-                />
-
-                <div style={{ marginTop: "10px", display: "flex", gap: "10px" }}>
-                  <button
-                    className="button"
-                    onClick={() => handleUpdate(exp.id)}
-                  >
-                    Save
-                  </button>
-
-                  <button
-                    className="logout"
-                    onClick={() => setEditingId(null)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p><strong>Amount:</strong> ₹ {exp.amount}</p>
-                <p><strong>Category:</strong> {exp.category}</p>
-
-                <div style={{ marginTop: "10px", display: "flex", gap: "10px" }}>
-                  <button
-                    className="button"
-                    onClick={() => handleEdit(exp)}
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    className="logout"
-                    onClick={() => handleDelete(exp.id)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </>
-            )}
-
+                    {(role==="admin" || exp.userId===user.uid) && (
+                      <button className="btn-delete" onClick={()=>handleDelete(exp.id)}>Delete</button>
+                    )}
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        )}
 
+        {activeTab==="users" && (
+          <div>
+            <h2>Users</h2>
+            {users.length === 0 ? (
+              <p>No users found</p>
+            ) : (
+              users.map((u) => (
+                <div key={u.id} className="card">
+                  <p><strong>Email:</strong> {u.email}</p>
+                  <p><strong>Role:</strong> {u.role}</p>
+
+                  {u.role !== "admin" && (
+                    <button className="btn-primary" onClick={() => promoteToAdmin(u.id)}>
+                      Make Admin
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab==="logs" && (
+          <div>
+            <h2>Logs</h2>
+
+            {/* ✅ FILTER DROPDOWN */}
+            <select value={logFilter} onChange={(e)=>setLogFilter(e.target.value)}>
+              <option value="All">All</option>
+              {[...new Set(logs.map((l)=>l.userEmail).filter(Boolean))].map((email, index)=>(
+                <option key={email + index} value={email}>{email}</option>
+              ))}
+            </select>
+
+            {filteredLogs.length === 0 ? (
+              <p>No logs found</p>
+            ) : (
+              filteredLogs.map((log) => (
+                <div key={log.id} className="card">
+                  <p><strong>User:</strong> {log.userEmail || "Unknown"}</p>
+                  <p><strong>Action:</strong> {log.action}</p>
+
+                  {log.details && (
+                    <p><strong>Details:</strong> {log.details}</p>
+                  )}
+
+                  {log.timestamp && (
+                    <p>
+                      <strong>Time:</strong>{" "}
+                      {new Date(log.timestamp.seconds * 1000).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }
