@@ -34,7 +34,6 @@ export default function Dashboard() {
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState("dashboard");
-
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
 
@@ -49,10 +48,8 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState("");
 
-  // ✅ ADDED FILTER STATE
   const [logFilter, setLogFilter] = useState("All");
 
-  // ✅ ADDED FILTER LOGIC
   const filteredLogs =
     logFilter === "All"
       ? logs
@@ -148,27 +145,39 @@ export default function Dashboard() {
   };
 
   const chartData = Object.values(
-  expenses.reduce((acc, curr) => {
-    if (!acc[curr.category]) {
-      acc[curr.category] = { category: curr.category, total: 0 };
-    }
-    acc[curr.category].total += Number(curr.amount);
-    return acc;
-  }, {})
-);
-const handleExport = () => {
-  const formattedData = expenses.map((exp) => ({
-    Amount: exp.amount,
-    Category: exp.category,
-    User: exp.userEmail || exp.userId,
-  }));
+    expenses.reduce((acc, curr) => {
+      if (!acc[curr.category]) {
+        acc[curr.category] = { category: curr.category, total: 0 };
+      }
+      acc[curr.category].total += Number(curr.amount);
+      return acc;
+    }, {})
+  );
 
-  const ws = XLSX.utils.json_to_sheet(formattedData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Expenses");
+  const handleExport = () => {
+    const formattedData = expenses.map((exp) => ({
+      Amount: exp.amount,
+      Category: exp.category,
+      User: exp.userEmail || exp.userId,
+    }));
 
-  const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  saveAs(new Blob([buffer]), "expenses.xlsx");
+    const ws = XLSX.utils.json_to_sheet(formattedData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Expenses");
+
+    const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    saveAs(new Blob([buffer]), "expenses.xlsx");
+  };
+
+  const makeAdmin = async (id) => {
+  try {
+    await updateDoc(doc(db, "users", id), {
+      role: "admin",
+    });
+    fetchUsers(); // refresh list
+  } catch (err) {
+    console.error(err);
+  }
 };
 
   if (!user) return <p>Loading...</p>;
@@ -176,17 +185,40 @@ const handleExport = () => {
   return (
     <div className="layout">
 
+      {/* SIDEBAR */}
       <div className="sidebar">
         <h2>💸 ExpenseApp</h2>
+
         <ul>
-          <li className={activeTab==="dashboard"?"active":""} onClick={()=>setActiveTab("dashboard")}>Dashboard</li>
-          <li className={activeTab==="expenses"?"active":""} onClick={()=>setActiveTab("expenses")}>Expenses</li>
-          <button className="btn-success" onClick={handleExport}>Export to Excel</button>
-          {role==="admin" && <li className={activeTab==="users"?"active":""} onClick={()=>setActiveTab("users")}>Users</li>}
-          {role==="admin" && <li className={activeTab==="logs"?"active":""} onClick={()=>setActiveTab("logs")}>Logs</li>}
+          <li className={activeTab==="dashboard"?"active":""} onClick={()=>setActiveTab("dashboard")}>
+            📊 Dashboard
+          </li>
+
+          <li className={activeTab==="expenses"?"active":""} onClick={()=>setActiveTab("expenses")}>
+            💸 Expenses
+          </li>
+
+          <li>
+            <button className="btn-success export-btn" onClick={handleExport}>
+              📥 Export to Excel
+            </button>
+          </li>
+
+          {role==="admin" && (
+            <li className={activeTab==="users"?"active":""} onClick={()=>setActiveTab("users")}>
+              👤 Users
+            </li>
+          )}
+
+          {role==="admin" && (
+            <li className={activeTab==="logs"?"active":""} onClick={()=>setActiveTab("logs")}>
+              📜 Logs
+            </li>
+          )}
         </ul>
       </div>
 
+      {/* MAIN */}
       <div className="main">
 
         <div className="header">
@@ -194,27 +226,29 @@ const handleExport = () => {
           <button className="btn-delete" onClick={handleLogout}>Logout</button>
         </div>
 
+        {/* DASHBOARD */}
         {activeTab==="dashboard" && (
-  <>
-    <div className="card">
-      <h2>Welcome {user.email}</h2>
-    </div>
+          <>
+            <div className="card">
+              <h2>Welcome {user.email}</h2>
+            </div>
 
-    <div className="card">
-      <h3>Expense Analytics</h3>
+            <div className="card">
+              <h3>Expense Analytics</h3>
 
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={chartData}>
-          <XAxis dataKey="category" />
-          <YAxis />
-          <Tooltip />
-          <Bar dataKey="total" />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  </>
-)}
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={chartData}>
+                  <XAxis dataKey="category" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="total" fill="#3b82f6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </>
+        )}
 
+        {/* EXPENSES */}
         {activeTab==="expenses" && (
           <div>
             <h2>Expenses</h2>
@@ -239,16 +273,15 @@ const handleExport = () => {
                   <>
                     <p className="amount">₹ {exp.amount}</p>
                     <p className="category">{exp.category}</p>
-                    {role === "admin" && (<p className="email">{exp.userEmail}</p>)}
+                    {role==="admin" && <p className="email">{exp.userEmail}</p>}
 
                     <div className="actions">
-                    {(role==="admin" || exp.userId===user.uid) && (
-                      <button className="btn-primary" onClick={()=>startEdit(exp)}>Edit</button>
-                    )}
-
-                    {(role==="admin" || exp.userId===user.uid) && (
-                      <button className="btn-delete" onClick={()=>handleDelete(exp.id)}>Delete</button>
-                    )}
+                      {(role==="admin" || exp.userId===user.uid) && (
+                        <button className="btn-primary" onClick={()=>startEdit(exp)}>Edit</button>
+                      )}
+                      {(role==="admin" || exp.userId===user.uid) && (
+                        <button className="btn-delete" onClick={()=>handleDelete(exp.id)}>Delete</button>
+                      )}
                     </div>
                   </>
                 )}
@@ -257,63 +290,71 @@ const handleExport = () => {
           </div>
         )}
 
-        {activeTab==="users" && (
-          <div>
-            <h2>Users</h2>
-            {users.length === 0 ? (
-              <p>No users found</p>
-            ) : (
-              users.map((u) => (
-                <div key={u.id} className="card">
-                  <p><strong>Email:</strong> {u.email}</p>
-                  <p><strong>Role:</strong> {u.role}</p>
+        {/* USERS */}
+        {/* USERS */}
+{activeTab==="users" && (
+  <div>
+    <h2>Users</h2>
 
-                  {u.role !== "admin" && (
-                    <button className="btn-primary" onClick={() => promoteToAdmin(u.id)}>
-                      Make Admin
-                    </button>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
+    {users.map((u)=>(
+      <div key={u.id} className="card">
+        <p><strong>Email:</strong> {u.email}</p>
+        <p><strong>Role:</strong> {u.role}</p>
+
+        {/* 🔥 ADD THIS */}
+        {role === "admin" && u.role !== "admin" && (
+          <button
+            className="btn-success make-admin-btn"
+            onClick={() => makeAdmin(u.id)}
+          >
+            Make Admin
+          </button>
+        )}
+      </div>
+    ))}
+  </div>
+)}
+
+        {/* LOGS */}
+        {/* LOGS */}
+{/* LOGS */}
+{activeTab==="logs" && (
+  <div>
+    <h2>Logs</h2>
+
+    <select value={logFilter} onChange={(e)=>setLogFilter(e.target.value)}>
+      <option value="All">All</option>
+      {[...new Set(logs.map((l)=>l.userEmail).filter(Boolean))].map((email,index)=>(
+        <option key={index} value={email}>{email}</option>
+      ))}
+    </select>
+
+    {filteredLogs.map((log)=>(
+      <div key={log.id} className="card">
+
+        <p>
+          <strong>User:</strong>{" "}
+          <span className="email">{log.userEmail}</span>
+        </p>
+
+        <p>
+          <strong>Action:</strong>{" "}
+          <span>{log.action}</span>
+        </p>
+
+        {log.timestamp && (
+          <p>
+            <strong>Time:</strong>{" "}
+            <span className="time">
+              {new Date(log.timestamp.seconds * 1000).toLocaleString()}
+            </span>
+          </p>
         )}
 
-        {activeTab==="logs" && (
-          <div>
-            <h2>Logs</h2>
-
-            {/* ✅ FILTER DROPDOWN */}
-            <select value={logFilter} onChange={(e)=>setLogFilter(e.target.value)}>
-              <option value="All">All</option>
-              {[...new Set(logs.map((l)=>l.userEmail).filter(Boolean))].map((email, index)=>(
-                <option key={email + index} value={email}>{email}</option>
-              ))}
-            </select>
-
-            {filteredLogs.length === 0 ? (
-              <p>No logs found</p>
-            ) : (
-              filteredLogs.map((log) => (
-                <div key={log.id} className="card">
-                  <p><strong>User:</strong> {log.userEmail || "Unknown"}</p>
-                  <p><strong>Action:</strong> {log.action}</p>
-
-                  {log.details && (
-                    <p><strong>Details:</strong> {log.details}</p>
-                  )}
-
-                  {log.timestamp && (
-                    <p>
-                      <strong>Time:</strong>{" "}
-                      {new Date(log.timestamp.seconds * 1000).toLocaleString()}
-                    </p>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        )}
+      </div>
+    ))}
+  </div>
+)}
 
       </div>
     </div>
