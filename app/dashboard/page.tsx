@@ -154,6 +154,11 @@ export default function Dashboard() {
     }, {})
   );
 
+  const totalExpense = expenses.reduce(
+    (sum, exp) => sum + Number(exp.amount || 0),
+    0
+  );
+
   const handleExport = () => {
     const formattedData = expenses.map((exp) => ({
       Amount: exp.amount,
@@ -170,22 +175,21 @@ export default function Dashboard() {
   };
 
   const makeAdmin = async (id) => {
-  try {
-    await updateDoc(doc(db, "users", id), {
-      role: "admin",
-    });
-    fetchUsers(); // refresh list
-  } catch (err) {
-    console.error(err);
-  }
-};
+    try {
+      await updateDoc(doc(db, "users", id), {
+        role: "admin",
+      });
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   if (!user) return <p>Loading...</p>;
 
   return (
     <div className="layout">
 
-      {/* SIDEBAR */}
       <div className="sidebar">
         <h2>💸 ExpenseApp</h2>
 
@@ -218,7 +222,6 @@ export default function Dashboard() {
         </ul>
       </div>
 
-      {/* MAIN */}
       <div className="main">
 
         <div className="header">
@@ -226,7 +229,6 @@ export default function Dashboard() {
           <button className="btn-delete" onClick={handleLogout}>Logout</button>
         </div>
 
-        {/* DASHBOARD */}
         {activeTab==="dashboard" && (
           <>
             <div className="card">
@@ -248,12 +250,17 @@ export default function Dashboard() {
           </>
         )}
 
-        {/* EXPENSES */}
+        {/* 🔥 EXPENSES (IMPROVED UI) */}
         {activeTab==="expenses" && (
           <div>
             <h2>Expenses</h2>
 
-            <div className="card form-card">
+            <div className="card stats-card">
+              <p className="stats-title">Total Expenses</p>
+              <h2 className="stats-value">₹ {totalExpense}</h2>
+            </div>
+
+            <div className="form-card">
               <input type="number" placeholder="Amount" value={amount} onChange={(e)=>setAmount(e.target.value)} />
               <input type="text" placeholder="Category" value={category} onChange={(e)=>setCategory(e.target.value)} />
               <button className="btn-primary" onClick={handleAddExpense}>Add Expense</button>
@@ -261,7 +268,6 @@ export default function Dashboard() {
 
             {expenses.map((exp)=>(
               <div key={exp.id} className="card">
-
                 {editId===exp.id ? (
                   <>
                     <input value={editAmount} onChange={(e)=>setEditAmount(e.target.value)} />
@@ -290,9 +296,9 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* USERS */}
-        {/* USERS */}
-{activeTab==="users" && (
+        {/* USERS + LOGS unchanged */}
+
+        {activeTab==="users" && role==="admin" && (
   <div>
     <h2>Users</h2>
 
@@ -301,11 +307,10 @@ export default function Dashboard() {
         <p><strong>Email:</strong> {u.email}</p>
         <p><strong>Role:</strong> {u.role}</p>
 
-        {/* 🔥 ADD THIS */}
-        {role === "admin" && u.role !== "admin" && (
+        {u.role !== "admin" && (
           <button
-            className="btn-success make-admin-btn"
-            onClick={() => makeAdmin(u.id)}
+            className="btn-primary make-admin-btn"
+            onClick={()=>makeAdmin(u.id)}
           >
             Make Admin
           </button>
@@ -315,42 +320,25 @@ export default function Dashboard() {
   </div>
 )}
 
-        {/* LOGS */}
-        {/* LOGS */}
-{/* LOGS */}
-{activeTab==="logs" && (
+{activeTab==="logs" && role==="admin" && (
   <div>
     <h2>Logs</h2>
 
     <select value={logFilter} onChange={(e)=>setLogFilter(e.target.value)}>
       <option value="All">All</option>
-      {[...new Set(logs.map((l)=>l.userEmail).filter(Boolean))].map((email,index)=>(
-        <option key={index} value={email}>{email}</option>
+      {users.map((u)=>(
+        <option key={u.id} value={u.email}>{u.email}</option>
       ))}
     </select>
 
     {filteredLogs.map((log)=>(
       <div key={log.id} className="card">
-
+        <p><strong>User:</strong> {log.userEmail}</p>
+        <p><strong>Action:</strong> {log.action}</p>
         <p>
-          <strong>User:</strong>{" "}
-          <span className="email">{log.userEmail}</span>
+          <strong>Time:</strong>{" "}
+          {log.timestamp?.toDate().toLocaleString()}
         </p>
-
-        <p>
-          <strong>Action:</strong>{" "}
-          <span>{log.action}</span>
-        </p>
-
-        {log.timestamp && (
-          <p>
-            <strong>Time:</strong>{" "}
-            <span className="time">
-              {new Date(log.timestamp.seconds * 1000).toLocaleString()}
-            </span>
-          </p>
-        )}
-
       </div>
     ))}
   </div>
