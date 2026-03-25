@@ -300,7 +300,7 @@ export default function Dashboard() {
 
         {activeTab==="users" && role==="admin" && (
   <div>
-    <h2>Users</h2>
+    <h2>Users List</h2>
 
     {users.map((u)=>(
       <div key={u.id} className="card">
