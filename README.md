@@ -17,4 +17,4 @@
 https://expense-tracker-new-gold-ten.vercel.app
 
 ## 🎥 Demo Video
-https://drive.google.com/file/d/18wnmyku-cIkF5y2pOxHDhEH-W0ZvZ7Hh/view?usp=sharing
+https://drive.google.com/file/d/1Uc7dJariUgK2TMU0C31ChiX-dLFDQYet/view?usp=sharing
